@@ -4,6 +4,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -45,6 +46,7 @@ public class FirstVerticleApp extends AbstractVerticle
 		router.get("/api/users/:id").handler(this::getOne);
 		router.put("/api/users/:id").handler(this::updateOne);
 		router.delete("/api/users/:id").handler(this::deleteOne);
+		router.get("/test/json").handler(this::getTestJson);
 	  
 		
 		vertx
@@ -84,11 +86,15 @@ public class FirstVerticleApp extends AbstractVerticle
 			routingContext.response().setStatusCode(400).end();
 		} else {
 			final Integer idAsInt = Integer.valueOf(id);
-			Users users = usersMap.get(id);
+			Users users = usersMap.get(idAsInt);
+			System.out.println("id as Int: " + idAsInt);
+			System.out.println("Users: " + users);
 			
 			if (users == null)
 			{
-				routingContext.response().setStatusCode(404).end();
+				int statusCode = 400;
+				System.out.println("Status Code: " + statusCode + ", id:"+id);
+				routingContext.response().setStatusCode(400).end();
 			} else {
 				routingContext.response()
 				.setStatusCode(200)
@@ -155,6 +161,36 @@ public class FirstVerticleApp extends AbstractVerticle
 	private Users getDataUsers(RoutingContext routingContext)
 	{
 		return Json.decodeValue(routingContext.getBodyAsString(), Users.class);
+	}
+	
+	private void getTestJson(RoutingContext routingContext) {
+		JsonObject jsonObj = new JsonObject();
+		jsonObj.put("first_name", "Ozy");
+		jsonObj.put("last_name", "Foldy");
+		
+		JsonObject detailObj = new JsonObject();
+		detailObj.put("status", "married");
+		detailObj.put("age", 23);
+		
+		jsonObj.put("detail", detailObj);
+		
+		JsonArray childrenArr = new JsonArray();
+		JsonObject childrenArr1 = new JsonObject();
+		childrenArr1.put("name", "Joe");
+		childrenArr1.put("gender", "Male");
+		
+		JsonObject childrenArr2 = new JsonObject();
+		childrenArr2.put("name", "Xin Heo");
+		childrenArr2.put("gender", "Female");
+		
+		childrenArr.add(childrenArr1);
+		childrenArr.add(childrenArr2);
+		
+		jsonObj.put("children", childrenArr);
+		
+		routingContext.response().setStatusCode(200)
+		.putHeader(HEADER_CONTENT_TYPE, HEADER_APPLICATION_JSON)
+		.end(jsonObj.encode());
 	}
 	
 	private void usersData()
